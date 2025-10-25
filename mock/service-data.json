@@ -1,0 +1,169 @@
+{
+  "service": {
+    "name": "Advanced AI Writing Assistant",
+    "description": "Professional AI-powered writing assistant that helps you create high-quality content, blog posts, marketing copy, and technical documentation with advanced grammar checking and SEO optimization.",
+    "category": "AI & ML",
+    "publisher_address": "",
+    "features": [
+      "Advanced Grammar & Style Checking",
+      "SEO-Optimized Content Generation",
+      "Multi-language Support (English, Spanish, French)",
+      "Tone and Voice Customization",
+      "Plagiarism Detection",
+      "Content Analytics & Insights",
+      "Export to Multiple Formats",
+      "Real-time Collaboration"
+    ],
+    "webhook_url": "https://your-api.example.com/webhook",
+    "webhook_events": [
+      "subscription_activated",
+      "content.generated",
+      "usage.limit_reached",
+      "subscription_renewed",
+      "subscription_cancelled"
+    ],
+    "custom_fields": [
+      {
+        "name": "email",
+        "type": "email",
+        "required": true
+      },
+      {
+        "name": "company",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "preferred_language",
+        "type": "text",
+        "required": false
+      },
+      {
+        "name": "usage_purpose",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "monthly_price": 29.99,
+    "quarterly_price": 79.99,
+    "yearly_price": 299.99,
+    "auto_renewal": true
+  },
+  "test_cases": {
+    "minimal_service": {
+      "name": "Simple API Service",
+      "description": "Basic API access service",
+      "category": "Data & Analytics",
+      "publisher_address": "test-wallet-minimal",
+      "features": ["API Access"],
+      "webhook_url": "https://minimal-api.example.com/webhook",
+      "webhook_events": ["subscription_activated"],
+      "custom_fields": [
+        {
+          "name": "email",
+          "type": "email",
+          "required": true
+        }
+      ],
+      "monthly_price": 9.99,
+      "auto_renewal": false
+    },
+    "complex_service": {
+      "name": "Enterprise DeFi Analytics Platform",
+      "description": "Comprehensive DeFi analytics platform with real-time data, portfolio tracking, yield optimization recommendations, and advanced risk assessment tools.",
+      "category": "DeFi",
+      "publisher_address": "test-wallet-enterprise",
+      "features": [
+        "Real-time DeFi Protocol Data",
+        "Portfolio Performance Analytics",
+        "Yield Optimization Strategies",
+        "Risk Assessment & Alerts",
+        "Custom Dashboard Creation",
+        "API Access for Integrations",
+        "Historical Data Analysis",
+        "Multi-wallet Support",
+        "Tax Reporting Tools",
+        "Community Insights"
+      ],
+      "webhook_url": "https://enterprise-defi.example.com/webhook",
+      "webhook_events": [
+        "subscription_activated",
+        "portfolio_updated",
+        "yield_opportunity_detected",
+        "risk_alert_triggered",
+        "subscription_renewed",
+        "subscription_cancelled"
+      ],
+      "custom_fields": [
+        {
+          "name": "wallet_address",
+          "type": "text",
+          "required": true
+        },
+        {
+          "name": "notification_email",
+          "type": "email",
+          "required": true
+        },
+        {
+          "name": "company_name",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "investment_experience",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "risk_tolerance",
+          "type": "text",
+          "required": false
+        },
+        {
+          "name": "preferred_currencies",
+          "type": "text",
+          "required": false
+        }
+      ],
+      "monthly_price": 99.99,
+      "quarterly_price": 269.99,
+      "yearly_price": 999.99,
+      "auto_renewal": true
+    }
+  },
+  "form_test_data": {
+    "valid_submission": {
+      "name": "Test Service Name",
+      "description": "This is a test service description for manual testing",
+      "category": "AI & ML",
+      "webhookUrl": "https://test-api.example.com/webhook",
+      "autoRenewalEnabled": true,
+      "pricingOptions": {
+        "monthly": { "price": 19.99, "enabled": true },
+        "quarterly": { "price": 49.99, "enabled": true },
+        "yearly": { "price": 179.99, "enabled": true }
+      },
+      "features": ["Feature 1", "Feature 2", "Feature 3"],
+      "webhookFields": [
+        { "name": "email", "type": "email", "required": true },
+        { "name": "username", "type": "text", "required": false },
+        { "name": "phone", "type": "number", "required": false }
+      ]
+    },
+    "minimal_submission": {
+      "name": "Minimal Test Service",
+      "description": "Minimal test",
+      "category": "Security",
+      "webhookUrl": "https://minimal-test.example.com/webhook",
+      "autoRenewalEnabled": false,
+      "pricingOptions": {
+        "monthly": { "price": 5.99, "enabled": true },
+        "quarterly": { "price": 0, "enabled": false },
+        "yearly": { "price": 0, "enabled": false }
+      },
+      "features": ["Basic Access"],
+      "webhookFields": [{ "name": "email", "type": "email", "required": true }]
+    }
+  }
+}

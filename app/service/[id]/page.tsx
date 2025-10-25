@@ -14,7 +14,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { useSolana } from "@/lib/solana-provider";
 import type { Service, Subscription, SubscriptionPlan } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
@@ -42,6 +50,10 @@ export default function ServiceDetailPage() {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("monthly");
   const [autoRenewal, setAutoRenewal] = useState(false);
+  const [showWebhookDialog, setShowWebhookDialog] = useState(false);
+  const [webhookFieldsData, setWebhookFieldsData] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     const serviceId = params.id as string;
@@ -96,12 +108,20 @@ export default function ServiceDetailPage() {
       return;
     }
 
+    // Check if service has custom fields that require webhook data
+    if (service.custom_fields && service.custom_fields.length > 0) {
+      setShowWebhookDialog(true);
+      return;
+    }
+
+    // If no custom fields, proceed directly
+    await processSubscription({});
+  };
+
+  const processSubscription = async (webhookData: Record<string, string>) => {
     setIsSubscribing(true);
 
     try {
-      // Simulate transaction
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
       const startDate = new Date();
       const endDate = new Date(startDate);
       switch (selectedPlan) {
@@ -118,19 +138,19 @@ export default function ServiceDetailPage() {
 
       const subscription: Subscription = {
         id: `sub-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        service_id: service.id,
-        subscriber_address: selectedAccount.address,
+        service_id: service!.id,
+        subscriber_address: selectedAccount!.address,
         plan: selectedPlan,
         price: getPlanPrice(selectedPlan),
         auto_renewal: autoRenewal,
-        status: "active" as const,
-        transaction_hash: `tx-${Math.random().toString(36).substr(2, 16)}`,
+        status: "pending" as const,
+        webhook_data: webhookData,
         start_date: startDate.toISOString(),
         end_date: endDate.toISOString(),
         created_at: new Date().toISOString(),
       };
 
-      // Save subscription to Supabase
+      // Save pending subscription to Supabase
       const supabase = createClient();
       const { error: subError } = await supabase
         .from("subscriptions")
@@ -140,27 +160,82 @@ export default function ServiceDetailPage() {
         throw subError;
       }
 
-      // Update subscriber count
+      // Simulate Solana transaction (0.001 SOL to service hash)
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      const mockTxHash = `tx-${Math.random().toString(36).substr(2, 16)}`;
+
+      // Update subscription status to paid
       const { error: updateError } = await supabase
-        .from("services")
-        .update({ subscribers_count: service.subscribers_count + 1 })
-        .eq("id", service.id);
+        .from("subscriptions")
+        .update({
+          status: "paid",
+          transaction_hash: mockTxHash,
+        })
+        .eq("id", subscription.id);
 
       if (updateError) {
-        console.error("Error updating subscriber count:", updateError);
+        throw updateError;
+      }
+
+      // Call webhook if URL exists
+      if (service!.webhook_url) {
+        try {
+          await fetch(service!.webhook_url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              event: "subscription_activated",
+              subscription_id: subscription.id,
+              service_id: service!.id,
+              subscriber_address: selectedAccount!.address,
+              plan: selectedPlan,
+              price: getPlanPrice(selectedPlan),
+              webhook_data: webhookData,
+              transaction_hash: mockTxHash,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+        } catch (webhookError) {
+          console.error("Webhook call failed:", webhookError);
+          // Don't fail the subscription for webhook errors
+        }
+      }
+
+      // Update subscription status to active
+      const { error: activateError } = await supabase
+        .from("subscriptions")
+        .update({ status: "active" })
+        .eq("id", subscription.id);
+
+      if (activateError) {
+        throw activateError;
+      }
+
+      // Update subscriber count
+      const { error: countError } = await supabase
+        .from("services")
+        .update({ subscribers_count: service!.subscribers_count + 1 })
+        .eq("id", service!.id);
+
+      if (countError) {
+        console.error("Error updating subscriber count:", countError);
       }
 
       toast({
         title: "Subscription successful",
-        description: `You are now subscribed to ${service.name}`,
+        description: `You are now subscribed to ${service!.name}`,
       });
 
       setIsSubscribed(true);
       setService({
-        ...service,
-        subscribers_count: service.subscribers_count + 1,
+        ...service!,
+        subscribers_count: service!.subscribers_count + 1,
       });
     } catch (error) {
+      console.error("Subscription error:", error);
       toast({
         title: "Subscription failed",
         description: "Please try again",
@@ -168,6 +243,7 @@ export default function ServiceDetailPage() {
       });
     } finally {
       setIsSubscribing(false);
+      setShowWebhookDialog(false);
     }
   };
 
@@ -224,9 +300,78 @@ export default function ServiceDetailPage() {
 
   const selectedPrice = getPlanPrice(selectedPlan);
 
+  const handleWebhookSubmit = () => {
+    // Validate required fields
+    if (service?.custom_fields) {
+      for (const field of service.custom_fields) {
+        if (field.required && !webhookFieldsData[field.name]?.trim()) {
+          toast({
+            title: "Required field missing",
+            description: `Please fill in ${field.name}`,
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+    processSubscription(webhookFieldsData);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+
+      {/* Webhook Dialog */}
+      <Dialog open={showWebhookDialog} onOpenChange={setShowWebhookDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Your Subscription</DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Please provide the required information for this service
+            </p>
+          </DialogHeader>
+          <div className="space-y-4">
+            {service?.custom_fields?.map((field, index) => (
+              <div key={index} className="space-y-2">
+                <Label htmlFor={field.name} className="flex items-center gap-2">
+                  {field.name}
+                  {field.required && <span className="text-red-500">*</span>}
+                </Label>
+                <Input
+                  id={field.name}
+                  type={
+                    field.type === "email"
+                      ? "email"
+                      : field.type === "number"
+                      ? "number"
+                      : "text"
+                  }
+                  placeholder={`Enter your ${field.name}`}
+                  value={webhookFieldsData[field.name] || ""}
+                  onChange={(e) =>
+                    setWebhookFieldsData({
+                      ...webhookFieldsData,
+                      [field.name]: e.target.value,
+                    })
+                  }
+                  required={field.required}
+                />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowWebhookDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleWebhookSubmit} disabled={isSubscribing}>
+              {isSubscribing ? "Processing..." : "Subscribe"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <main className="container mx-auto px-4 py-8 max-w-7xl">
         <Button
@@ -308,66 +453,6 @@ export default function ServiceDetailPage() {
                 </CardContent>
               </Card>
             )}
-
-            {/* Integration Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">Integration & API</CardTitle>
-                <CardDescription>
-                  Connect this service to your application
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {service.callback_url && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Globe className="h-4 w-4 text-primary" />
-                      <span>Callback URL</span>
-                    </div>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <Link
-                        href={service.callback_url}
-                        target="_blank"
-                        className="text-sm text-primary hover:underline break-all flex items-center gap-2"
-                      >
-                        {service.callback_url}
-                        <ExternalLink className="h-3 w-3 flex-shrink-0" />
-                      </Link>
-                    </div>
-                  </div>
-                )}
-
-                {service.webhook_url && (
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm font-medium">
-                      <Webhook className="h-4 w-4 text-primary" />
-                      <span>Webhook Endpoint</span>
-                    </div>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <code className="text-sm break-all">
-                        {service.webhook_url}
-                      </code>
-                    </div>
-                    {service.webhook_events &&
-                      service.webhook_events.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {service.webhook_events.map(
-                            (event: string, index: number) => (
-                              <Badge
-                                key={index}
-                                variant="outline"
-                                className="text-xs"
-                              >
-                                {event}
-                              </Badge>
-                            )
-                          )}
-                        </div>
-                      )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
 
             {/* Publisher Information */}
             <Card>

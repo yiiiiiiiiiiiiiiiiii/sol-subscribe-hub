@@ -9,12 +9,9 @@ import {
 } from "@/components/ui/card";
 import { Navbar } from "@/components/navbar";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Zap, Shield, Bell, Rocket, Check } from "lucide-react";
 
 export default function HomePage() {
-  const router = useRouter();
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

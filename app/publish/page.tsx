@@ -154,7 +154,7 @@ export default function PublishPage() {
         description: "Your service is now live and discoverable",
       });
 
-      router.push("/discover");
+      router.push("/my-services");
     } catch (error) {
       console.error("[v0] Error publishing service:", error);
       toast({

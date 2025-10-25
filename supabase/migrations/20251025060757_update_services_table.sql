@@ -2,6 +2,9 @@
 alter table public.services drop column if exists callback_url;
 alter table public.services add column if not exists custom_fields jsonb default '[]'::jsonb;
 
+-- Add webhook_data column to subscriptions table
+alter table public.subscriptions add column if not exists webhook_data jsonb;
+
 -- Update existing services to have webhook_events with subscription_activated
 update public.services
 set webhook_events = array['subscription_activated'] || coalesce(webhook_events, '{}')

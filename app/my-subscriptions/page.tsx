@@ -48,9 +48,9 @@ export default function MySubscriptionsPage() {
             name,
             description,
             category,
-            callback_url,
             webhook_url,
-            webhook_events
+            webhook_events,
+            custom_fields
           )
         `
         )
@@ -143,11 +143,11 @@ export default function MySubscriptionsPage() {
             </span>
           </div>
 
-          {subscription.service.callback_url && (
+          {subscription.service.webhook_url && (
             <div className="flex items-center gap-2 text-sm">
               <ExternalLink className="h-4 w-4 text-muted-foreground" />
               <Link
-                href={subscription.service.callback_url}
+                href={subscription.service.webhook_url}
                 target="_blank"
                 className="text-primary hover:underline truncate"
               >

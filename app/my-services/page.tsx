@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSolana } from "@/lib/solana-provider";
 import type { Service, Subscription } from "@/lib/types";
 import { createClient } from "@/lib/supabase/client";
@@ -19,7 +18,6 @@ import {
   Users,
   DollarSign,
   TrendingUp,
-  Calendar,
   Eye,
   Settings,
   Plus,

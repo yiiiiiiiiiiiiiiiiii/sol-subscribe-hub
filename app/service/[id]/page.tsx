@@ -31,8 +31,6 @@ import {
   Users,
   Check,
   ExternalLink,
-  Globe,
-  Webhook,
   Shield,
   Clock,
 } from "lucide-react";

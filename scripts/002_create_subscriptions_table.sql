@@ -10,7 +10,8 @@ create table if not exists public.subscriptions (
   transaction_hash text,
   start_date timestamp with time zone default now(),
   end_date timestamp with time zone not null,
-  created_at timestamp with time zone default now()
+  created_at timestamp with time zone default now(),
+  webhook_data jsonb
 );
 
 -- Enable RLS
